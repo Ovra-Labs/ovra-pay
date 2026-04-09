@@ -7,31 +7,18 @@ description: >
   any website that accepts Visa. EU-native, GDPR by design. Use even if
   the user just says "buy", "order", "purchase", "subscribe", or "pay for".
 license: MIT
-compatibility: Requires Ovra MCP server connection and API key (OVRA_API_KEY).
-env:
-  OVRA_API_KEY:
-    description: "Ovra API key for authentication. Get yours at https://getovra.com/dashboard/keys"
-    required: true
-    format: "sk_test_* (sandbox) or sk_live_* (production)"
-endpoints:
-  mcp: "https://api.getovra.com/api/mcp"
-  api: "https://api.getovra.com"
-  dashboard: "https://getovra.com/dashboard"
-capabilities:
-  - "autonomous-payments"
-  - "virtual-visa-cards"
-  - "policy-enforcement"
-  - "receipt-upload"
-  - "dispute-filing"
-  - "http-402-handling"
+compatibility: >
+  Requires OVRA_API_KEY (get at https://getovra.com/dashboard/keys) and
+  MCP server connection to https://api.getovra.com/api/mcp. Network access
+  to api.getovra.com required. Sandbox keys (sk_test_*) available for testing.
 metadata:
-  version: "2.1.0"
+  version: "2.2.0"
   author: "Ovra Labs"
   website: "https://getovra.com"
   docs: "https://docs.getovra.com"
-  mcp: "https://api.getovra.com/api/mcp"
-  security: "Zero-knowledge — agent never sees real card data (PAN/CVV). Uses Visa Network Tokens (DPAN)."
-  data_residency: "EU (Germany)"
+  mcp-endpoint: "https://api.getovra.com/api/mcp"
+  required-credential: "OVRA_API_KEY"
+  data-residency: "EU (Germany)"
   compliance: "GDPR, PSD2"
 ---
 
@@ -65,7 +52,7 @@ Replace `YOUR_OVRA_API_KEY` with your key from [getovra.com/dashboard/keys](http
 
 ### What this skill sends externally
 
-All tool calls (`ovra_pay`, `ovra_card`, etc.) are sent to `https://api.getovra.com/api/mcp` via the MCP protocol. Receipt uploads (`ovra_receipt`) transmit base64-encoded files to the same endpoint. No data is sent to any other external service. All data is stored in the EU (Germany) per GDPR.
+All tool calls (`ovra_pay`, `ovra_card`, etc.) are sent to `https://api.getovra.com/api/mcp` via the MCP protocol. Receipt uploads (`ovra_receipt`) transmit base64-encoded PDF or PNG files (max 5MB) to the same endpoint — only upload invoices/receipts from the current transaction, never arbitrary files. No data is sent to any other external service. All data is stored in the EU (Germany) per GDPR.
 
 ## Quick Start — One-Step Payment
 
@@ -116,7 +103,7 @@ ovra_pay({
 | Tool | Actions | Description |
 |------|---------|-------------|
 | `ovra_transaction` | list, get, memo | Payment history and notes. |
-| `ovra_receipt` | upload, get | Receipt management (PDF, base64). |
+| `ovra_receipt` | upload, get | Receipt management. Upload only PDF/PNG invoices from the current transaction. Max 5MB. |
 | `ovra_dispute` | list, get, file | File disputes on transactions. |
 
 ### Admin
@@ -168,6 +155,8 @@ ovra_credential({ action: "obtain", intentId: "in_xxx" })
 Returns DPAN + cryptogram. The agent never sees the real card number.
 
 ### Step 4: Attach receipt
+
+Only upload the invoice/receipt PDF or PNG from this specific transaction. Never upload unrelated files.
 
 ```
 ovra_receipt({
